@@ -1,0 +1,14 @@
+E:\Projects\SemaphoreTest\Semaphore\SemaphoreTests\bin\Debug\Microsoft.VisualStudio.TestPlatform.MSTest.TestAdapter.dll
+E:\Projects\SemaphoreTest\Semaphore\SemaphoreTests\bin\Debug\Microsoft.VisualStudio.TestPlatform.MSTestAdapter.PlatformServices.Interface.dll
+E:\Projects\SemaphoreTest\Semaphore\SemaphoreTests\bin\Debug\Microsoft.VisualStudio.TestPlatform.MSTestAdapter.PlatformServices.dll
+E:\Projects\SemaphoreTest\Semaphore\SemaphoreTests\bin\Debug\SemaphoreTests.dll
+E:\Projects\SemaphoreTest\Semaphore\SemaphoreTests\bin\Debug\SemaphoreTests.pdb
+E:\Projects\SemaphoreTest\Semaphore\SemaphoreTests\bin\Debug\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll
+E:\Projects\SemaphoreTest\Semaphore\SemaphoreTests\bin\Debug\Semaphore.exe
+E:\Projects\SemaphoreTest\Semaphore\SemaphoreTests\bin\Debug\Semaphore.pdb
+E:\Projects\SemaphoreTest\Semaphore\SemaphoreTests\bin\Debug\Semaphore.exe.config
+E:\Projects\SemaphoreTest\Semaphore\SemaphoreTests\bin\Debug\ru\Microsoft.VisualStudio.QualityTools.UnitTestFramework.resources.dll
+E:\Projects\SemaphoreTest\Semaphore\SemaphoreTests\obj\Debug\SemaphoreTests.csprojAssemblyReference.cache
+E:\Projects\SemaphoreTest\Semaphore\SemaphoreTests\obj\Debug\SemaphoreTests.csproj.CopyComplete
+E:\Projects\SemaphoreTest\Semaphore\SemaphoreTests\obj\Debug\SemaphoreTests.dll
+E:\Projects\SemaphoreTest\Semaphore\SemaphoreTests\obj\Debug\SemaphoreTests.pdb
