@@ -12,10 +12,6 @@ namespace Semaphore
         private readonly int threadCount;
         private int currentCount;
         private object locker;
-        private object innerLocker;
-        private bool isStop;
-        private Thread t;
-        private int releaseThreadCount;
 
         /// <summary>
         /// Creates new instance of MySemaphore
@@ -23,11 +19,13 @@ namespace Semaphore
         /// <param name="count">Initial number of entries and the maximum number of concurrent entries</param>
         public MyMonitorSemaphore(int count)
         {
+            if (count < 0)
+            {
+                throw new System.ArgumentOutOfRangeException();
+            }
             threadCount = count;
             currentCount = 0;
             locker = new object();
-            innerLocker = new object();
-            isStop = false;
         }
 
         /// <summary>
@@ -37,16 +35,13 @@ namespace Semaphore
         {
             lock(locker)
             {
-                
                 if (currentCount >= threadCount)
                 {
                     Monitor.Wait(locker);
                 }
                 ++currentCount;
             }
-
         }
-
 
         /// <summary>
         /// Tries to acquire the semaphore or returns immediately if semaphore could not be acquired
@@ -54,13 +49,17 @@ namespace Semaphore
         /// <returns>True if acquiring the semaphore is successful, otherwise - false</returns>
         public bool TryAcquire()
         {
-            Monitor.Enter(innerLocker);
-            try {
-                return currentCount < threadCount;
-            }
-            finally
+            lock (locker)
             {
-                Monitor.Exit(innerLocker);
+                if (currentCount >= threadCount)
+                {
+                    return false;
+                }
+                else
+                {
+                    ++currentCount;
+                    return true;
+                }
             }
         }
 
@@ -73,12 +72,17 @@ namespace Semaphore
         {
             lock (locker)
             {
+                if (releaseCount < 0)
+                {
+                    throw new System.ArgumentOutOfRangeException();
+                }
                 int previous = currentCount;
                 if (releaseCount > currentCount)
                 {
                     throw new System.Threading.SemaphoreFullException();
                 }
-                while(releaseCount-- > 0)
+                currentCount -= releaseCount;
+                while (releaseCount-- > 0)
                 {
                     Monitor.Pulse(locker);
                 }

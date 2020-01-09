@@ -12,3 +12,17 @@ E:\Projects\SemaphoreTest\Semaphore\SemaphoreTests\obj\Debug\SemaphoreTests.cspr
 E:\Projects\SemaphoreTest\Semaphore\SemaphoreTests\obj\Debug\SemaphoreTests.csproj.CopyComplete
 E:\Projects\SemaphoreTest\Semaphore\SemaphoreTests\obj\Debug\SemaphoreTests.dll
 E:\Projects\SemaphoreTest\Semaphore\SemaphoreTests\obj\Debug\SemaphoreTests.pdb
+C:\Users\Timus\source\repos\MySemaphore\SemaphoreTests\bin\Debug\Microsoft.VisualStudio.TestPlatform.MSTest.TestAdapter.dll
+C:\Users\Timus\source\repos\MySemaphore\SemaphoreTests\bin\Debug\Microsoft.VisualStudio.TestPlatform.MSTestAdapter.PlatformServices.Interface.dll
+C:\Users\Timus\source\repos\MySemaphore\SemaphoreTests\bin\Debug\Microsoft.VisualStudio.TestPlatform.MSTestAdapter.PlatformServices.dll
+C:\Users\Timus\source\repos\MySemaphore\SemaphoreTests\bin\Debug\SemaphoreTests.dll
+C:\Users\Timus\source\repos\MySemaphore\SemaphoreTests\bin\Debug\SemaphoreTests.pdb
+C:\Users\Timus\source\repos\MySemaphore\SemaphoreTests\bin\Debug\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll
+C:\Users\Timus\source\repos\MySemaphore\SemaphoreTests\bin\Debug\Semaphore.exe
+C:\Users\Timus\source\repos\MySemaphore\SemaphoreTests\bin\Debug\Semaphore.pdb
+C:\Users\Timus\source\repos\MySemaphore\SemaphoreTests\bin\Debug\Semaphore.exe.config
+C:\Users\Timus\source\repos\MySemaphore\SemaphoreTests\bin\Debug\ru\Microsoft.VisualStudio.QualityTools.UnitTestFramework.resources.dll
+C:\Users\Timus\source\repos\MySemaphore\SemaphoreTests\obj\Debug\SemaphoreTests.csprojAssemblyReference.cache
+C:\Users\Timus\source\repos\MySemaphore\SemaphoreTests\obj\Debug\SemaphoreTests.csproj.CopyComplete
+C:\Users\Timus\source\repos\MySemaphore\SemaphoreTests\obj\Debug\SemaphoreTests.dll
+C:\Users\Timus\source\repos\MySemaphore\SemaphoreTests\obj\Debug\SemaphoreTests.pdb

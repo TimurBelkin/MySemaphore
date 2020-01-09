@@ -12,3 +12,17 @@ E:\Projects\SemaphoreTest\Semaphore\Semaphore\obj\Debug\Semaphore.csprojAssembly
 E:\Projects\SemaphoreTest\Semaphore\Semaphore\obj\Debug\Semaphore.csproj.CopyComplete
 E:\Projects\SemaphoreTest\Semaphore\Semaphore\obj\Debug\Semaphore.exe
 E:\Projects\SemaphoreTest\Semaphore\Semaphore\obj\Debug\Semaphore.pdb
+C:\Users\Timus\source\repos\MySemaphore\Semaphore\bin\Debug\Microsoft.VisualStudio.TestPlatform.MSTest.TestAdapter.dll
+C:\Users\Timus\source\repos\MySemaphore\Semaphore\bin\Debug\Microsoft.VisualStudio.TestPlatform.MSTestAdapter.PlatformServices.Interface.dll
+C:\Users\Timus\source\repos\MySemaphore\Semaphore\bin\Debug\Microsoft.VisualStudio.TestPlatform.MSTestAdapter.PlatformServices.dll
+C:\Users\Timus\source\repos\MySemaphore\Semaphore\bin\Debug\Semaphore.exe.config
+C:\Users\Timus\source\repos\MySemaphore\Semaphore\bin\Debug\Semaphore.exe
+C:\Users\Timus\source\repos\MySemaphore\Semaphore\bin\Debug\Semaphore.pdb
+C:\Users\Timus\source\repos\MySemaphore\Semaphore\bin\Debug\Microsoft.VisualStudio.TestPlatform.TestFramework.dll
+C:\Users\Timus\source\repos\MySemaphore\Semaphore\bin\Debug\Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions.dll
+C:\Users\Timus\source\repos\MySemaphore\Semaphore\bin\Debug\Microsoft.VisualStudio.TestPlatform.TestFramework.xml
+C:\Users\Timus\source\repos\MySemaphore\Semaphore\bin\Debug\Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions.xml
+C:\Users\Timus\source\repos\MySemaphore\Semaphore\obj\Debug\Semaphore.csprojAssemblyReference.cache
+C:\Users\Timus\source\repos\MySemaphore\Semaphore\obj\Debug\Semaphore.csproj.CopyComplete
+C:\Users\Timus\source\repos\MySemaphore\Semaphore\obj\Debug\Semaphore.exe
+C:\Users\Timus\source\repos\MySemaphore\Semaphore\obj\Debug\Semaphore.pdb
