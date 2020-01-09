@@ -10,13 +10,13 @@ namespace Semaphore
     class Program
     {
         private static ISemaphore semaphore;
-        private static int result = 0;
+        private static long result = 0;
         private static int timeWait = 500;
         static void Main(string[] args)
         {
             try
             {
-                semaphore = new MySemaphore(3);
+                semaphore = new MyMonitorSemaphore(3);
                 TestThread();
                 semaphore = new MySemaphore(2);
 
@@ -36,8 +36,27 @@ namespace Semaphore
 
         private static void TestThread()
         {
-            IEnumerable<Thread> threads = InitializeWork(10);
+            int threadNum = 10;
+            var threads = createThreads(threadNum);
+            var waitHandles = createHandles(threadNum);
+            RunThreads(threads, waitHandles);
+           
+            waitMe(waitHandles, 3);
 
+            semaphore.Release(1);
+            waitMe(waitHandles, 4);
+
+            semaphore.Release(3);
+            waitMe(waitHandles, 7);
+
+            semaphore.Release(2);
+            waitMe(waitHandles, 9);
+
+            semaphore.Release(1);
+            waitMe(waitHandles, 10);
+
+
+            /*
             waitWhileNoThreadHasState(threads, ThreadState.Running);
             Console.WriteLine(getNumberOfBlocked(threads));
 
@@ -60,26 +79,63 @@ namespace Semaphore
             semaphore.Release(1);
             waitWhileNoThreadHasState(threads, ThreadState.Running);
             Console.WriteLine(getNumberOfBlocked(threads));
-
+            */
             int stop = 1;
         }
-        private static IEnumerable<Thread> InitializeWork (int threadNumber)
+
+        private static void waitMe(WaitHandle[] waitHandles, int stoppedThreadCounter)
+        {
+            while (Interlocked.CompareExchange(ref result, result, stoppedThreadCounter) != stoppedThreadCounter)
+            {
+                WaitHandle.WaitAny(waitHandles);
+                Console.WriteLine(Interlocked.Read(ref result));
+            }
+            Console.WriteLine("Result is {0}", Interlocked.Read(ref result));
+        }
+        private static WaitHandle[] InitializeWork (int threadNumber)
         {
             IEnumerable<Thread> threads = createThreads(threadNumber);
+            WaitHandle[] waitHandles = Enumerable.Repeat<WaitHandle>(new AutoResetEvent(false), threadNumber).ToArray();
+            // WaitHandle[] wlaitHandes = new WaitHandle[threadNumber];
+            var en = waitHandles.GetEnumerator();
             foreach (var thread in threads)
-                thread.Start();
-            waitWhileNoThreadHasState(threads, ThreadState.Unstarted);
-            return threads;
+            {
+                en.MoveNext();
+                thread.Start(en.Current);
+            }
+            while(Interlocked.CompareExchange(ref result, 3, 3) != 3)
+            {
+                WaitHandle.WaitAny(waitHandles);
+                Console.WriteLine(Interlocked.Read(ref result));
+            }
+            Console.WriteLine(Interlocked.Read(ref result));
+            //waitWhileNoThreadHasState(threads, ThreadState.Unstarted);
+            return waitHandles;
         }
         private static IEnumerable<Thread> createThreads(int threadNumber)
         {
             List<Thread> threads = new List<Thread>();
             for(int it = 0; it < threadNumber; ++it)
             {
-                Thread t = new Thread(new ThreadStart(Do));
+                Thread t = new Thread(new ParameterizedThreadStart(DoSmth));
                 threads.Add(t);
             }
             return threads;
+        }
+
+        private static WaitHandle[] createHandles(int threadNumber)
+        {
+            return  Enumerable.Repeat<WaitHandle>(new AutoResetEvent(false), threadNumber).ToArray();
+        }
+
+        private static void RunThreads(IEnumerable<Thread> threads, WaitHandle [] waitHandles)
+        {
+            var en = waitHandles.GetEnumerator();
+            foreach (var thread in threads)
+            {
+                en.MoveNext();
+                thread.Start(en.Current);
+            }
         }
 
         private static void waitWhileNoThreadHasState(IEnumerable<Thread> threads, ThreadState state)
@@ -135,6 +191,14 @@ namespace Semaphore
         { 
             semaphore.Acquire();
             Interlocked.Increment(ref result);
+        }
+
+        public static void DoSmth(object state)
+        { 
+            AutoResetEvent are = (AutoResetEvent)state;
+            semaphore.Acquire();
+            Interlocked.Increment(ref result);
+            are.Set();
         }
 
         public static void TryAcquireTest()

@@ -22,7 +22,6 @@ C:\Users\Timus\source\repos\MySemaphore\Semaphore\bin\Debug\Microsoft.VisualStud
 C:\Users\Timus\source\repos\MySemaphore\Semaphore\bin\Debug\Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions.dll
 C:\Users\Timus\source\repos\MySemaphore\Semaphore\bin\Debug\Microsoft.VisualStudio.TestPlatform.TestFramework.xml
 C:\Users\Timus\source\repos\MySemaphore\Semaphore\bin\Debug\Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions.xml
-C:\Users\Timus\source\repos\MySemaphore\Semaphore\obj\Debug\Semaphore.csprojAssemblyReference.cache
 C:\Users\Timus\source\repos\MySemaphore\Semaphore\obj\Debug\Semaphore.csproj.CopyComplete
 C:\Users\Timus\source\repos\MySemaphore\Semaphore\obj\Debug\Semaphore.exe
 C:\Users\Timus\source\repos\MySemaphore\Semaphore\obj\Debug\Semaphore.pdb

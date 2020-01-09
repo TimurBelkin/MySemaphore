@@ -11,7 +11,9 @@ namespace Semaphore.Tests
     public abstract class MyBaseSemaphoreTest
     {
         protected ISemaphore semaphore;
+        protected ISemaphore semaphore3;
         private int enteranceCounter = 0;
+        private int result = 0;
         private static int timeWait = 500;
 
         [TestMethod]
@@ -50,8 +52,81 @@ namespace Semaphore.Tests
         }
 
         [TestMethod]
+        public void AcquireTestThread()
+        {
+            result = 0;
+            int threadNum = 10;
+            var threads = createThreads(threadNum);
+            var waitHandles = createHandles(threadNum);
+            RunThreads(threads, waitHandles);
+            bool isGood = true;
+            
+            waitMe(waitHandles, 3);
+            isGood &= (Interlocked.CompareExchange(ref result, result, 3) == 3);
+
+            semaphore3.Release(1);
+            waitMe(waitHandles, 4);
+            isGood &= (Interlocked.CompareExchange(ref result, result, 4) == 4);
+
+            semaphore3.Release(3);
+            waitMe(waitHandles, 7);
+            isGood &= (Interlocked.CompareExchange(ref result, result, 7) == 7);
+
+            semaphore3.Release(2);
+            waitMe(waitHandles, 9);
+            isGood &= (Interlocked.CompareExchange(ref result, result, 9) == 9);
+
+            semaphore3.Release(1);
+            waitMe(waitHandles, 10);
+            isGood &= (Interlocked.CompareExchange(ref result, result, 10) == 10);
+            Assert.AreEqual(true, isGood);
+        }
+
+        private void waitMe(WaitHandle[] waitHandles, int stoppedThreadCounter)
+        {
+            while (Interlocked.CompareExchange(ref result, result, stoppedThreadCounter) != stoppedThreadCounter)
+            {
+                WaitHandle.WaitAny(waitHandles);
+            }
+        }
+        private IEnumerable<Thread> createThreads(int threadNumber)
+        {
+            List<Thread> threads = new List<Thread>();
+            for (int it = 0; it < threadNumber; ++it)
+            {
+                Thread t = new Thread(new ParameterizedThreadStart(DoSmth));
+                threads.Add(t);
+            }
+            return threads;
+        }
+
+        private void RunThreads(IEnumerable<Thread> threads, WaitHandle[] waitHandles)
+        {
+            var en = waitHandles.GetEnumerator();
+            foreach (var thread in threads)
+            {
+                en.MoveNext();
+                thread.Start(en.Current);
+            }
+        }
+        public void DoSmth(object state)
+        {
+            AutoResetEvent are = (AutoResetEvent)state;
+            semaphore3.Acquire();
+            Interlocked.Increment(ref result);
+            are.Set();
+        }
+
+        private static WaitHandle[] createHandles(int threadNumber)
+        {
+            return Enumerable.Repeat<WaitHandle>(new AutoResetEvent(false), threadNumber).ToArray();
+        }
+
+
+        [TestMethod]
         public void AcquireTest()
         {
+            enteranceCounter = 0;
             System.Threading.Thread t = new Thread(new ThreadStart(Do));
             System.Threading.Thread t2 = new Thread(new ThreadStart(Do));
             System.Threading.Thread t3 = new Thread(new ThreadStart(Do));
@@ -125,6 +200,7 @@ namespace Semaphore.Tests
         public void Setup()
         {
             this.semaphore = new MySemaphore(2);
+            this.semaphore3 = new MySemaphore(3);
         }
 
         [TestMethod]
@@ -149,7 +225,8 @@ namespace Semaphore.Tests
         public void Setup()
         {
             this.semaphore = new MyMonitorSemaphore(2);
-        }
+            this.semaphore3 = new MyMonitorSemaphore(3);
+    }
 
         [TestMethod]
         [ExpectedException(typeof(System.ArgumentOutOfRangeException))]
