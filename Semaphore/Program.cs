@@ -16,6 +16,8 @@ namespace Semaphore
         {
             try
             {
+                semaphore = new MySemaphore(3);
+                TestThread();
                 semaphore = new MySemaphore(2);
 
                 semaphore.Release(-1);
@@ -31,6 +33,85 @@ namespace Semaphore
             }
             int y = 0;
         }
+
+        private static void TestThread()
+        {
+            IEnumerable<Thread> threads = InitializeWork(10);
+
+            waitWhileNoThreadHasState(threads, ThreadState.Running);
+            Console.WriteLine(getNumberOfBlocked(threads));
+
+            semaphore.Release(1);
+            waitWhileNoThreadHasState(threads, ThreadState.Running);
+            Console.WriteLine(getNumberOfBlocked(threads));
+
+            semaphore.Release(3);
+            waitWhileNoThreadHasState(threads, ThreadState.Running);
+            Console.WriteLine(getNumberOfBlocked(threads));
+
+            semaphore.Release(2);
+            waitWhileNoThreadHasState(threads, ThreadState.Running);
+            Console.WriteLine(getNumberOfBlocked(threads));
+
+            semaphore.Release(1);
+            waitWhileNoThreadHasState(threads, ThreadState.Running);
+            Console.WriteLine(getNumberOfBlocked(threads));
+
+            semaphore.Release(1);
+            waitWhileNoThreadHasState(threads, ThreadState.Running);
+            Console.WriteLine(getNumberOfBlocked(threads));
+
+            int stop = 1;
+        }
+        private static IEnumerable<Thread> InitializeWork (int threadNumber)
+        {
+            IEnumerable<Thread> threads = createThreads(threadNumber);
+            foreach (var thread in threads)
+                thread.Start();
+            waitWhileNoThreadHasState(threads, ThreadState.Unstarted);
+            return threads;
+        }
+        private static IEnumerable<Thread> createThreads(int threadNumber)
+        {
+            List<Thread> threads = new List<Thread>();
+            for(int it = 0; it < threadNumber; ++it)
+            {
+                Thread t = new Thread(new ThreadStart(Do));
+                threads.Add(t);
+            }
+            return threads;
+        }
+
+        private static void waitWhileNoThreadHasState(IEnumerable<Thread> threads, ThreadState state)
+        {
+            bool isAnyThreadHasState = true;
+            while (isAnyThreadHasState)
+            {
+                isAnyThreadHasState = false;
+                foreach (var thread in threads)
+                {
+                    if (thread.ThreadState == state)
+                    {
+                        isAnyThreadHasState = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        private static int getNumberOfBlocked(IEnumerable<Thread> threads)
+        {
+            int number = 0;
+            foreach (var thread in threads)
+            {
+                if (thread.ThreadState == ThreadState.WaitSleepJoin)
+                {
+                    ++number;
+                }
+            }
+            return number;
+        }
+
         private static void Test()
         {
             semaphore = new MyMonitorSemaphore(2);

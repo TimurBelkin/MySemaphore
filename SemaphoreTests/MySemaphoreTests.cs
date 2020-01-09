@@ -27,12 +27,26 @@ namespace Semaphore.Tests
 
         [TestMethod]
         [ExpectedException(typeof(System.ArgumentOutOfRangeException))]
+        public abstract void NullNumberOfthread();
+
+        [TestMethod]
+        [ExpectedException(typeof(System.ArgumentOutOfRangeException))]
         public void NegativeReleaseNumber()
         {
             System.Threading.Thread t = new Thread(new ThreadStart(Do));
             t.Start();
             t.Join(timeWait);
             semaphore.Release(-1);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(System.ArgumentOutOfRangeException))]
+        public void NullReleaseNumber()
+        {
+            System.Threading.Thread t = new Thread(new ThreadStart(Do));
+            t.Start();
+            t.Join(timeWait);
+            semaphore.Release(0);
         }
 
         [TestMethod]
@@ -119,6 +133,13 @@ namespace Semaphore.Tests
         {
             ISemaphore sem = new MySemaphore(-1);
         }
+
+        [TestMethod]
+        [ExpectedException(typeof(System.ArgumentOutOfRangeException))]
+        public override void NullNumberOfthread()
+        {
+            ISemaphore sem = new MySemaphore(0);
+        }
     }
 
     [TestClass]
@@ -135,6 +156,13 @@ namespace Semaphore.Tests
         public override void NegativeNumberOfthread()
         {
             ISemaphore sem = new MyMonitorSemaphore(-1);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(System.ArgumentOutOfRangeException))]
+        public override void NullNumberOfthread()
+        {
+            ISemaphore sem = new MyMonitorSemaphore(0);
         }
     }
 }

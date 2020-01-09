@@ -19,7 +19,7 @@ namespace Semaphore
         /// <param name="count">Initial number of entries and the maximum number of concurrent entries</param>
         public MyMonitorSemaphore(int count)
         {
-            if (count < 0)
+            if (count <= 0)
             {
                 throw new System.ArgumentOutOfRangeException();
             }
@@ -72,7 +72,7 @@ namespace Semaphore
         {
             lock (locker)
             {
-                if (releaseCount < 0)
+                if (releaseCount <= 0)
                 {
                     throw new System.ArgumentOutOfRangeException();
                 }
