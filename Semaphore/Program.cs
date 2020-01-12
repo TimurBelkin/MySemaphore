@@ -12,9 +12,10 @@ namespace Semaphore
         private static ISemaphore semaphore;
         private static long result = 0;
         private static int timeWait = 500;
-        protected ISemaphore TwoPlaceSemaphore;
+        protected static ISemaphore TwoPlaceSemaphore;
         protected static ISemaphore ThreePlaceSemaphore;
         private static int enteranceCounter = 0;
+        private static int EnteranceCounter = 0;
         private static readonly int MAX_WAIT_TIME = 50;
         static void Main(string[] args)
         {
@@ -22,6 +23,9 @@ namespace Semaphore
             {
                 semaphore = new MyMonitorSemaphore(3);
                 ThreePlaceSemaphore = new MyMonitorSemaphore(3);
+                TwoPlaceSemaphore = new MyMonitorSemaphore(2);
+
+                TryAcquireTest();
 
                 AutoAcquireTestThread();
                 semaphore = new MySemaphore(2);
@@ -38,6 +42,50 @@ namespace Semaphore
                 Console.WriteLine(ex.ToString());
             }
             int y = 0;
+        }
+
+        public static void TryAcquireTest()
+        {
+            EnteranceCounter = 0;
+            var threads = CreateThreads(4, TryAquireToIncrement);
+            RunThreads(threads);
+            bool isAllStopped = false;
+            while (!isAllStopped)
+            {
+                foreach (var thread in threads)
+                {
+                    isAllStopped = thread.IsAlive || isAllStopped;
+                }
+            }
+            bool isOK = true;
+
+            isOK &= (Interlocked.CompareExchange(ref EnteranceCounter, 2, 2) == 2); // only two from 4 has to be executed
+            TwoPlaceSemaphore.Release(2);
+            int y = 0;
+        }
+
+        private static void RunThreads(IEnumerable<Thread> threads)
+        {
+            foreach (var thread in threads)
+            {
+                thread.Start();
+            }
+        }
+
+        private static void TryAquireToIncrement()
+        {
+            if (TwoPlaceSemaphore.TryAcquire())
+                Interlocked.Increment(ref EnteranceCounter);
+        }
+        private static IEnumerable<Thread> CreateThreads(int threadNumber, Action action)
+        {
+            List<Thread> threads = new List<Thread>();
+            for (int it = 0; it < threadNumber; ++it)
+            {
+                Thread thread = new Thread(new ThreadStart(action));
+                threads.Add(thread);
+            }
+            return threads;
         }
 
         public static void AutoAcquireTestThread()
@@ -170,7 +218,7 @@ namespace Semaphore
             are.Set();
         }
 
-        public static void TryAcquireTest()
+        public static void TryAcquireTest2()
         {
             semaphore = new MyMonitorSemaphore(2);
             System.Threading.Thread t = new Thread(new ThreadStart(Do));

@@ -10,13 +10,14 @@ namespace Semaphore.Tests
 {
     public abstract class MyBaseSemaphoreTest
     {
+        protected const int TIME_LIMIT_FOR_TEST = 2000;
+
         private static readonly int MAX_WAIT_TIME = 50;
 
-        protected ISemaphore TwoPlaceSemaphore;
-        protected ISemaphore ThreePlaceSemaphore;
-        private int EnteranceCounter = 0;
+        protected ISemaphore twoPlaceSemaphore;
+        protected ISemaphore threePlaceSemaphore;
+        private int enteranceCounter = 0;
 
-        protected const int TIME_LIMIT_FOR_TEST = 2000;
 
         /// <summary>
         /// Simple clear tests for two placed Semaphore
@@ -26,7 +27,7 @@ namespace Semaphore.Tests
         [ExpectedException(typeof(System.Threading.SemaphoreFullException))]
         public void Release_Throws()
         {
-            TwoPlaceSemaphore.Release(1);
+            twoPlaceSemaphore.Release(1);
         }
 
         [TestMethod, Timeout(TIME_LIMIT_FOR_TEST)]
@@ -44,7 +45,7 @@ namespace Semaphore.Tests
             Thread thread = new Thread(new ThreadStart(IncrementCounter));
             thread.Start();
             thread.Join(MAX_WAIT_TIME);
-            TwoPlaceSemaphore.Release(-1);
+            twoPlaceSemaphore.Release(-1);
         }
 
         [TestMethod, Timeout(TIME_LIMIT_FOR_TEST)]
@@ -54,13 +55,13 @@ namespace Semaphore.Tests
             Thread thread = new Thread(new ThreadStart(IncrementCounter));
             thread.Start();
             thread.Join(MAX_WAIT_TIME);
-            TwoPlaceSemaphore.Release(0);
+            twoPlaceSemaphore.Release(0);
         }
 
         [TestMethod, Timeout(TIME_LIMIT_FOR_TEST)]
         public void AcquireTest()
         {
-            EnteranceCounter = 0;
+            enteranceCounter = 0;
             Thread thread = new Thread(new ThreadStart(IncrementCounter));
             Thread secondThread = new Thread(new ThreadStart(IncrementCounter));
             Thread thirdThread = new Thread(new ThreadStart(IncrementCounter));
@@ -74,13 +75,13 @@ namespace Semaphore.Tests
             thirdThread.Join(MAX_WAIT_TIME);
 
             bool isOK = true;
-            isOK &= (Interlocked.CompareExchange(ref EnteranceCounter, 2, 2) == 2);
+            isOK &= (Interlocked.CompareExchange(ref enteranceCounter, 2, 2) == 2);
 
-            TwoPlaceSemaphore.Release(1);
+            twoPlaceSemaphore.Release(1);
             thirdThread.Join(MAX_WAIT_TIME);
-            isOK &= (Interlocked.CompareExchange(ref EnteranceCounter, 3, 3) == 3);
+            isOK &= (Interlocked.CompareExchange(ref enteranceCounter, 3, 3) == 3);
 
-            TwoPlaceSemaphore.Release(2);
+            twoPlaceSemaphore.Release(2);
 
             Assert.AreEqual(true, isOK);
         }
@@ -88,43 +89,91 @@ namespace Semaphore.Tests
         [TestMethod, Timeout(TIME_LIMIT_FOR_TEST)]
         public void TryAcquireTest()
         {
+            enteranceCounter = 0;
+            var threads = CreateThreads(10, TryAquireToIncrement);
+            RunThreads(threads);
+            bool isAnyAlive = true;
+            while(isAnyAlive)
+            {
+                isAnyAlive = false;
+                foreach (var thread in threads)
+                {
+                    isAnyAlive = thread.IsAlive || isAnyAlive;
+                }
+            }
+            bool isOK = true;
+
+            isOK &= (Interlocked.CompareExchange(ref enteranceCounter, 2, 2) == 2); // only two from 10 has to be executed
+            twoPlaceSemaphore.Release(2);
+
+            Assert.AreEqual(true, isOK);
+        }
+        
+        [TestMethod, Timeout(TIME_LIMIT_FOR_TEST)]
+        public void TryAcquireSequentialTest()
+        {
+            bool isOK = true;
+            enteranceCounter = 0;
+
+            TryAquireToIncrement();
+            isOK &= (Interlocked.CompareExchange(ref enteranceCounter, 1, 1) == 1);
+
+            TryAquireToIncrement();
+            isOK &= (Interlocked.CompareExchange(ref enteranceCounter, 2, 2) == 2);
+
+            TryAquireToIncrement();
+            isOK &= (Interlocked.CompareExchange(ref enteranceCounter, 2, 2) == 2);
+
+            twoPlaceSemaphore.Release(1);
+
+            TryAquireToIncrement();
+            isOK &= (Interlocked.CompareExchange(ref enteranceCounter, 3, 3) == 3);
+
+            twoPlaceSemaphore.Release(2);
+
+            Assert.AreEqual(true, isOK);
+        }
+        
+        [TestMethod, Timeout(TIME_LIMIT_FOR_TEST)]
+        public void TryAcquireCombinedTest()
+        {
             Thread thread = new Thread(new ThreadStart(IncrementCounter));
             Thread secondThread = new Thread(new ThreadStart(IncrementCounter));
             Thread thirdThread = new Thread(new ThreadStart(IncrementCounter));
 
             bool isOK = true;
 
-            isOK &= TwoPlaceSemaphore.TryAcquire();
-            TwoPlaceSemaphore.Release(1);
+            isOK &= twoPlaceSemaphore.TryAcquire();
+            twoPlaceSemaphore.Release(1);
 
             thread.Start();
             thread.Join(MAX_WAIT_TIME);  // 1 place from 2 is occupied
 
-            isOK &= TwoPlaceSemaphore.TryAcquire(); // 2 places from 2 are occupied
+            isOK &= twoPlaceSemaphore.TryAcquire(); // 2 places from 2 are occupied
 
-            isOK &= !TwoPlaceSemaphore.TryAcquire(); // no entrance, all places are occupied
+            isOK &= !twoPlaceSemaphore.TryAcquire(); // no entrance, all places are occupied
 
-            TwoPlaceSemaphore.Release(1); // 1 place from 2 is occupied
+            twoPlaceSemaphore.Release(1); // 1 place from 2 is occupied
 
             secondThread.Start();
             secondThread.Join(MAX_WAIT_TIME);  // 2 places from 2 is occupied
 
-            isOK &= !TwoPlaceSemaphore.TryAcquire(); // no entrance, all places are occupied
+            isOK &= !twoPlaceSemaphore.TryAcquire(); // no entrance, all places are occupied
 
             thirdThread.Start();
             thirdThread.Join(MAX_WAIT_TIME); // third thread tries to enter.
 
-            isOK &= !TwoPlaceSemaphore.TryAcquire(); // no entrance, all places are occupied third thread is in queue
+            isOK &= !twoPlaceSemaphore.TryAcquire(); // no entrance, all places are occupied third thread is in queue
 
-            TwoPlaceSemaphore.Release(1);
+            twoPlaceSemaphore.Release(1);
             thirdThread.Join(MAX_WAIT_TIME);  // 2nd thread out, 3d in. 2 places from 2 is occupied
 
-            isOK &= !TwoPlaceSemaphore.TryAcquire(); // no entrance, all places are occupied
+            isOK &= !twoPlaceSemaphore.TryAcquire(); // no entrance, all places are occupied
 
-            TwoPlaceSemaphore.Release(1); // 1 place from 2 is occupied
-            isOK &= TwoPlaceSemaphore.TryAcquire();  // 2 place from 2 is occupied
-            
-            TwoPlaceSemaphore.Release(2); 
+            twoPlaceSemaphore.Release(1); // 1 place from 2 is occupied
+            isOK &= twoPlaceSemaphore.TryAcquire();  // 2 place from 2 is occupied
+
+            twoPlaceSemaphore.Release(2);
 
             Assert.AreEqual(true, isOK);
         }
@@ -136,33 +185,33 @@ namespace Semaphore.Tests
         [TestMethod, Timeout(TIME_LIMIT_FOR_TEST)]
         public void AcquireTestThread()
         {
-            EnteranceCounter = 0;
+            enteranceCounter = 0;
             int threadNumber = 10;
             var threads = CreateThreads(threadNumber, IncrementCounterWithNotice);
             var waitHandles = createHandles(threadNumber);
             RunThreads(threads, waitHandles);
             bool isOK = true;
-            
+
             WaitSomeThreadsToFinish(waitHandles, 3);
-            isOK &= (Interlocked.CompareExchange(ref EnteranceCounter, EnteranceCounter, 3) == 3);
+            isOK &= (Interlocked.CompareExchange(ref enteranceCounter, enteranceCounter, 3) == 3);
 
-            ThreePlaceSemaphore.Release(1);
+            threePlaceSemaphore.Release(1);
             WaitSomeThreadsToFinish(waitHandles, 4);
-            isOK &= (Interlocked.CompareExchange(ref EnteranceCounter, EnteranceCounter, 4) == 4);
+            isOK &= (Interlocked.CompareExchange(ref enteranceCounter, enteranceCounter, 4) == 4);
 
-            ThreePlaceSemaphore.Release(3);
+            threePlaceSemaphore.Release(3);
             WaitSomeThreadsToFinish(waitHandles, 7);
-            isOK &= (Interlocked.CompareExchange(ref EnteranceCounter, EnteranceCounter, 7) == 7);
+            isOK &= (Interlocked.CompareExchange(ref enteranceCounter, enteranceCounter, 7) == 7);
 
-            ThreePlaceSemaphore.Release(2);
+            threePlaceSemaphore.Release(2);
             WaitSomeThreadsToFinish(waitHandles, 9);
-            isOK &= (Interlocked.CompareExchange(ref EnteranceCounter, EnteranceCounter, 9) == 9);
+            isOK &= (Interlocked.CompareExchange(ref enteranceCounter, enteranceCounter, 9) == 9);
 
-            ThreePlaceSemaphore.Release(1);
+            threePlaceSemaphore.Release(1);
             WaitSomeThreadsToFinish(waitHandles, 10);
-            isOK &= (Interlocked.CompareExchange(ref EnteranceCounter, EnteranceCounter, 10) == 10);
+            isOK &= (Interlocked.CompareExchange(ref enteranceCounter, enteranceCounter, 10) == 10);
 
-            ThreePlaceSemaphore.Release(3);
+            threePlaceSemaphore.Release(3);
 
             Assert.AreEqual(true, isOK);
         }
@@ -170,7 +219,7 @@ namespace Semaphore.Tests
         [TestMethod, Timeout(TIME_LIMIT_FOR_TEST)]
         public void AutoAcquireTestThread()
         {
-            EnteranceCounter = 0;
+            enteranceCounter = 0;
             int threadNumber = 63; // limited by autoWaitHandle maximum  number (64)
             int semaphoreCapacity = 3;
             var threads = CreateThreads(threadNumber, IncrementCounterWithNotice);
@@ -179,25 +228,25 @@ namespace Semaphore.Tests
             bool isOK = true;
 
             WaitSomeThreadsToFinish(waitHandles, semaphoreCapacity);
-            isOK &= (Interlocked.CompareExchange(ref EnteranceCounter, EnteranceCounter, semaphoreCapacity) == semaphoreCapacity);
+            isOK &= (Interlocked.CompareExchange(ref enteranceCounter, enteranceCounter, semaphoreCapacity) == semaphoreCapacity);
 
             int releaseCounter = 0;
             for (int it = semaphoreCapacity * 2; it <= threadNumber; it += semaphoreCapacity)
             {
-                ThreePlaceSemaphore.Release(semaphoreCapacity);
+                threePlaceSemaphore.Release(semaphoreCapacity);
                 releaseCounter += semaphoreCapacity;
                 WaitSomeThreadsToFinish(waitHandles, it);
-                isOK &= (Interlocked.CompareExchange(ref EnteranceCounter, EnteranceCounter, it) == it);
+                isOK &= (Interlocked.CompareExchange(ref enteranceCounter, enteranceCounter, it) == it);
             }
 
-            ThreePlaceSemaphore.Release(threadNumber - releaseCounter);
+            threePlaceSemaphore.Release(threadNumber - releaseCounter);
 
             Assert.AreEqual(true, isOK);
         }
 
         private void WaitSomeThreadsToFinish(WaitHandle[] waitHandles, int numberThreadsToWait)
         {
-            while (Interlocked.CompareExchange(ref EnteranceCounter, EnteranceCounter, numberThreadsToWait) != numberThreadsToWait)
+            while (Interlocked.CompareExchange(ref enteranceCounter, enteranceCounter, numberThreadsToWait) != numberThreadsToWait)
             {
                 WaitHandle.WaitAny(waitHandles);
             }
@@ -213,6 +262,17 @@ namespace Semaphore.Tests
             return threads;
         }
 
+        private IEnumerable<Thread> CreateThreads(int threadNumber, Action action)
+        {
+            List<Thread> threads = new List<Thread>();
+            for (int it = 0; it < threadNumber; ++it)
+            {
+                Thread thread = new Thread(new ThreadStart(action));
+                threads.Add(thread);
+            }
+            return threads;
+        }
+
         private void RunThreads(IEnumerable<Thread> threads, WaitHandle[] waitHandles)
         {
             var en = waitHandles.GetEnumerator();
@@ -222,14 +282,27 @@ namespace Semaphore.Tests
                 thread.Start(en.Current);
             }
         }
-        public void IncrementCounterWithNotice(object state)
+
+        private void RunThreads(IEnumerable<Thread> threads)
+        {
+            foreach (var thread in threads)
+            {
+                thread.Start();
+            }
+        }
+        private void IncrementCounterWithNotice(object state)
         {
             AutoResetEvent are = (AutoResetEvent)state;
-            ThreePlaceSemaphore.Acquire();
-            Interlocked.Increment(ref EnteranceCounter);
+            threePlaceSemaphore.Acquire();
+            Interlocked.Increment(ref enteranceCounter);
             are.Set();
         }
 
+        private void TryAquireToIncrement()
+        {
+            if (twoPlaceSemaphore.TryAcquire())
+                Interlocked.Increment(ref enteranceCounter);
+        }
         private static WaitHandle[] createHandles(int threadNumber)
         {
             return Enumerable.Repeat<WaitHandle>(new AutoResetEvent(false), threadNumber).ToArray();
@@ -237,20 +310,20 @@ namespace Semaphore.Tests
 
         public void IncrementCounter()
         {
-            TwoPlaceSemaphore.Acquire();
-            Interlocked.Increment(ref EnteranceCounter);
+            twoPlaceSemaphore.Acquire();
+            Interlocked.Increment(ref enteranceCounter);
         }
     }
-     
+
     [TestClass]
     public class MyMonitorSemaphoreTest : MyBaseSemaphoreTest
     {
         [TestInitialize]
         public void Setup()
         {
-            this.TwoPlaceSemaphore = new MyMonitorSemaphore(2);
-            this.ThreePlaceSemaphore = new MyMonitorSemaphore(3);
-    }
+            this.twoPlaceSemaphore = new MyMonitorSemaphore(2);
+            this.threePlaceSemaphore = new MyMonitorSemaphore(3);
+        }
 
         [TestMethod, Timeout(TIME_LIMIT_FOR_TEST)]
         [ExpectedException(typeof(System.ArgumentOutOfRangeException))]
@@ -273,8 +346,8 @@ namespace Semaphore.Tests
         [TestInitialize]
         public void Setup()
         {
-            this.TwoPlaceSemaphore = new MySemaphore(2);
-            this.ThreePlaceSemaphore = new MySemaphore(3);
+            this.twoPlaceSemaphore = new MySemaphore(2);
+            this.threePlaceSemaphore = new MySemaphore(3);
         }
 
         [TestMethod, Timeout(TIME_LIMIT_FOR_TEST)]

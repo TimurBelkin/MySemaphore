@@ -51,15 +51,14 @@ namespace Semaphore
         {
             lock (locker)
             {
-                if (currentCount >= threadCount)
-                {
-                    return false;
-                }
-                else
+                bool isEntered = false;
+                if (currentCount < threadCount)
                 {
                     ++currentCount;
-                    return true;
+                    isEntered = true;
                 }
+                Monitor.PulseAll(locker);
+                return isEntered;
             }
         }
 
