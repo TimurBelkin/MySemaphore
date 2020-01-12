@@ -25,3 +25,4 @@ C:\Users\Timus\source\repos\MySemaphore\Semaphore\bin\Debug\Microsoft.VisualStud
 C:\Users\Timus\source\repos\MySemaphore\Semaphore\obj\Debug\Semaphore.csproj.CopyComplete
 C:\Users\Timus\source\repos\MySemaphore\Semaphore\obj\Debug\Semaphore.exe
 C:\Users\Timus\source\repos\MySemaphore\Semaphore\obj\Debug\Semaphore.pdb
+C:\Users\Timus\source\repos\MySemaphore\Semaphore\obj\Debug\Semaphore.csprojAssemblyReference.cache

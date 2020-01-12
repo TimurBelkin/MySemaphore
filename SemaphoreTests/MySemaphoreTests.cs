@@ -10,17 +10,20 @@ namespace Semaphore.Tests
 {
     public abstract class MyBaseSemaphoreTest
     {
-        protected ISemaphore semaphore;
-        protected ISemaphore semaphore3;
+        protected ISemaphore TwoPlaceSemaphore;
+        protected ISemaphore ThreePlaceSemaphore;
         private int enteranceCounter = 0;
-        private int result = 0;
-        private static int timeWait = 500;
+        private static readonly int MAX_WAIT_TIME = 50;
 
+        /// <summary>
+        /// Simple clear tests for two placed Semaphore
+        /// </summary>
+        /// 
         [TestMethod]
         [ExpectedException(typeof(System.Threading.SemaphoreFullException))]
         public void Release_Throws()
         {
-            semaphore.Release(1);
+            TwoPlaceSemaphore.Release(1);
         }
 
         [TestMethod]
@@ -35,67 +38,174 @@ namespace Semaphore.Tests
         [ExpectedException(typeof(System.ArgumentOutOfRangeException))]
         public void NegativeReleaseNumber()
         {
-            System.Threading.Thread t = new Thread(new ThreadStart(Do));
-            t.Start();
-            t.Join(timeWait);
-            semaphore.Release(-1);
+            Thread thread = new Thread(new ThreadStart(IncrementCounter));
+            thread.Start();
+            thread.Join(MAX_WAIT_TIME);
+            TwoPlaceSemaphore.Release(-1);
         }
 
         [TestMethod]
         [ExpectedException(typeof(System.ArgumentOutOfRangeException))]
         public void NullReleaseNumber()
         {
-            System.Threading.Thread t = new Thread(new ThreadStart(Do));
-            t.Start();
-            t.Join(timeWait);
-            semaphore.Release(0);
+            Thread thread = new Thread(new ThreadStart(IncrementCounter));
+            thread.Start();
+            thread.Join(MAX_WAIT_TIME);
+            TwoPlaceSemaphore.Release(0);
         }
 
         [TestMethod]
-        public void AcquireTestThread()
+        public void AcquireTest()
         {
-            result = 0;
-            int threadNum = 10;
-            var threads = createThreads(threadNum);
-            var waitHandles = createHandles(threadNum);
-            RunThreads(threads, waitHandles);
-            bool isGood = true;
-            
-            waitMe(waitHandles, 3);
-            isGood &= (Interlocked.CompareExchange(ref result, result, 3) == 3);
+            enteranceCounter = 0;
+            Thread thread = new Thread(new ThreadStart(IncrementCounter));
+            Thread secondThread = new Thread(new ThreadStart(IncrementCounter));
+            Thread thirdThread = new Thread(new ThreadStart(IncrementCounter));
 
-            semaphore3.Release(1);
-            waitMe(waitHandles, 4);
-            isGood &= (Interlocked.CompareExchange(ref result, result, 4) == 4);
+            thread.Start();
+            secondThread.Start();
+            thirdThread.Start();
 
-            semaphore3.Release(3);
-            waitMe(waitHandles, 7);
-            isGood &= (Interlocked.CompareExchange(ref result, result, 7) == 7);
+            thread.Join(MAX_WAIT_TIME);
+            secondThread.Join(MAX_WAIT_TIME);
+            thirdThread.Join(MAX_WAIT_TIME);
 
-            semaphore3.Release(2);
-            waitMe(waitHandles, 9);
-            isGood &= (Interlocked.CompareExchange(ref result, result, 9) == 9);
+            bool isOK = true;
+            isOK &= (Interlocked.CompareExchange(ref enteranceCounter, 2, 2) == 2);
 
-            semaphore3.Release(1);
-            waitMe(waitHandles, 10);
-            isGood &= (Interlocked.CompareExchange(ref result, result, 10) == 10);
-            Assert.AreEqual(true, isGood);
+            TwoPlaceSemaphore.Release(1);
+            thirdThread.Join(MAX_WAIT_TIME);
+            isOK &= (Interlocked.CompareExchange(ref enteranceCounter, 3, 3) == 3);
+
+            TwoPlaceSemaphore.Release(2);
+
+            Assert.AreEqual(true, isOK);
         }
 
-        private void waitMe(WaitHandle[] waitHandles, int stoppedThreadCounter)
+        [TestMethod]
+        public void TryAcquireTest()
         {
-            while (Interlocked.CompareExchange(ref result, result, stoppedThreadCounter) != stoppedThreadCounter)
+            Thread thread = new Thread(new ThreadStart(IncrementCounter));
+            Thread secondThread = new Thread(new ThreadStart(IncrementCounter));
+            Thread thirdThread = new Thread(new ThreadStart(IncrementCounter));
+
+            bool isOK = true;
+
+            isOK &= TwoPlaceSemaphore.TryAcquire();
+            TwoPlaceSemaphore.Release(1);
+
+            thread.Start();
+            thread.Join(MAX_WAIT_TIME);  // 1 place from 2 is occupied
+
+            isOK &= TwoPlaceSemaphore.TryAcquire(); // 2 places from 2 are occupied
+
+            isOK &= !TwoPlaceSemaphore.TryAcquire(); // no entrance, all places are occupied
+
+            TwoPlaceSemaphore.Release(1); // 1 place from 2 is occupied
+
+            secondThread.Start();
+            secondThread.Join(MAX_WAIT_TIME);  // 2 places from 2 is occupied
+
+            isOK &= !TwoPlaceSemaphore.TryAcquire(); // no entrance, all places are occupied
+
+            thirdThread.Start();
+            thirdThread.Join(MAX_WAIT_TIME); // third thread tries to enter.
+
+            isOK &= !TwoPlaceSemaphore.TryAcquire(); // no entrance, all places are occupied third thread is in queue
+
+            TwoPlaceSemaphore.Release(1);
+            thirdThread.Join(MAX_WAIT_TIME);  // 2nd thread out, 3d in. 2 places from 2 is occupied
+
+            isOK &= !TwoPlaceSemaphore.TryAcquire(); // no entrance, all places are occupied
+
+            TwoPlaceSemaphore.Release(1); // 1 place from 2 is occupied
+            isOK &= TwoPlaceSemaphore.TryAcquire();  // 2 place from 2 is occupied
+            
+            TwoPlaceSemaphore.Release(2); 
+
+            Assert.AreEqual(true, isOK);
+        }
+
+        /// <summary>
+        /// More complicated tests 3 placed semaphore
+        /// </summary>
+        /// 
+        [TestMethod]
+        public void AcquireTestThread()
+        {
+            enteranceCounter = 0;
+            int threadNumber = 10;
+            var threads = CreateThreads(threadNumber);
+            var waitHandles = createHandles(threadNumber);
+            RunThreads(threads, waitHandles);
+            bool isOK = true;
+            
+            WaitSomeThreadsToFinish(waitHandles, 3);
+            isOK &= (Interlocked.CompareExchange(ref enteranceCounter, enteranceCounter, 3) == 3);
+
+            ThreePlaceSemaphore.Release(1);
+            WaitSomeThreadsToFinish(waitHandles, 4);
+            isOK &= (Interlocked.CompareExchange(ref enteranceCounter, enteranceCounter, 4) == 4);
+
+            ThreePlaceSemaphore.Release(3);
+            WaitSomeThreadsToFinish(waitHandles, 7);
+            isOK &= (Interlocked.CompareExchange(ref enteranceCounter, enteranceCounter, 7) == 7);
+
+            ThreePlaceSemaphore.Release(2);
+            WaitSomeThreadsToFinish(waitHandles, 9);
+            isOK &= (Interlocked.CompareExchange(ref enteranceCounter, enteranceCounter, 9) == 9);
+
+            ThreePlaceSemaphore.Release(1);
+            WaitSomeThreadsToFinish(waitHandles, 10);
+            isOK &= (Interlocked.CompareExchange(ref enteranceCounter, enteranceCounter, 10) == 10);
+
+            ThreePlaceSemaphore.Release(3);
+
+            Assert.AreEqual(true, isOK);
+        }
+
+        [TestMethod]
+        public void AutoAcquireTestThread()
+        {
+            enteranceCounter = 0;
+            int threadNumber = 63; // limited by autoWaitHandle maximum  number (64)
+            int semaphoreCapacity = 3;
+            var threads = CreateThreads(threadNumber);
+            var waitHandles = createHandles(threadNumber);
+            RunThreads(threads, waitHandles);
+            bool isOK = true;
+
+            WaitSomeThreadsToFinish(waitHandles, semaphoreCapacity);
+            isOK &= (Interlocked.CompareExchange(ref enteranceCounter, enteranceCounter, semaphoreCapacity) == semaphoreCapacity);
+
+            int releaseCounter = 0;
+            for (int it = semaphoreCapacity * 2; it <= threadNumber; it += semaphoreCapacity)
+            {
+                ThreePlaceSemaphore.Release(semaphoreCapacity);
+                releaseCounter += semaphoreCapacity;
+                WaitSomeThreadsToFinish(waitHandles, it);
+                isOK &= (Interlocked.CompareExchange(ref enteranceCounter, enteranceCounter, it) == it);
+            }
+
+            ThreePlaceSemaphore.Release(threadNumber - releaseCounter);
+
+            Assert.AreEqual(true, isOK);
+        }
+
+        private void WaitSomeThreadsToFinish(WaitHandle[] waitHandles, int numberThreadsToWait)
+        {
+            while (Interlocked.CompareExchange(ref enteranceCounter, enteranceCounter, numberThreadsToWait) != numberThreadsToWait)
             {
                 WaitHandle.WaitAny(waitHandles);
             }
         }
-        private IEnumerable<Thread> createThreads(int threadNumber)
+        private IEnumerable<Thread> CreateThreads(int threadNumber)
         {
             List<Thread> threads = new List<Thread>();
             for (int it = 0; it < threadNumber; ++it)
             {
-                Thread t = new Thread(new ParameterizedThreadStart(DoSmth));
-                threads.Add(t);
+                Thread thread = new Thread(new ParameterizedThreadStart(IncrementCounterWithNotice));
+                threads.Add(thread);
             }
             return threads;
         }
@@ -109,11 +219,11 @@ namespace Semaphore.Tests
                 thread.Start(en.Current);
             }
         }
-        public void DoSmth(object state)
+        public void IncrementCounterWithNotice(object state)
         {
             AutoResetEvent are = (AutoResetEvent)state;
-            semaphore3.Acquire();
-            Interlocked.Increment(ref result);
+            ThreePlaceSemaphore.Acquire();
+            Interlocked.Increment(ref enteranceCounter);
             are.Set();
         }
 
@@ -122,74 +232,35 @@ namespace Semaphore.Tests
             return Enumerable.Repeat<WaitHandle>(new AutoResetEvent(false), threadNumber).ToArray();
         }
 
-
-        [TestMethod]
-        public void AcquireTest()
+        public void IncrementCounter()
         {
-            enteranceCounter = 0;
-            System.Threading.Thread t = new Thread(new ThreadStart(Do));
-            System.Threading.Thread t2 = new Thread(new ThreadStart(Do));
-            System.Threading.Thread t3 = new Thread(new ThreadStart(Do));
-            t.Start();
-            t2.Start();
-            t3.Start();
-            t.Join(timeWait);
-            t2.Join(timeWait);
-            t3.Join(timeWait);
-            bool isGood = true;
-            isGood &= (Interlocked.CompareExchange(ref enteranceCounter, 2, 2) == 2);
-            semaphore.Release(1);
-            t3.Join(timeWait);
-            isGood &= (Interlocked.CompareExchange(ref enteranceCounter, 3, 3) == 3);
-            semaphore.Release(2);
-            Assert.AreEqual(true, isGood);
-        }
-
-        [TestMethod]
-        public void TryAcquireTest()
-        {
-            System.Threading.Thread t = new Thread(new ThreadStart(Do));
-            System.Threading.Thread t2 = new Thread(new ThreadStart(Do));
-            System.Threading.Thread t3 = new Thread(new ThreadStart(Do));
-
-            bool isGood = true;
-
-            isGood &= semaphore.TryAcquire();
-            semaphore.Release(1);
-
-            t.Start();
-            t.Join(timeWait);
-
-            isGood &= semaphore.TryAcquire();
-            semaphore.Release(1);
-
-            t2.Start();
-            t2.Join(timeWait);
-
-            isGood &= !semaphore.TryAcquire();
-
-            t3.Start();
-            t3.Join(timeWait);
-
-            isGood &= !semaphore.TryAcquire();
-
-            semaphore.Release(1);
-            t3.Join(timeWait);
-
-            isGood &= !semaphore.TryAcquire();
-
-            semaphore.Release(1);
-            isGood &= semaphore.TryAcquire();
-            semaphore.Release(1);
-
-            semaphore.Release(1);
-            Assert.AreEqual(true, isGood);
-        }
-
-        public void Do()
-        {
-            semaphore.Acquire();
+            TwoPlaceSemaphore.Acquire();
             Interlocked.Increment(ref enteranceCounter);
+        }
+    }
+     
+    [TestClass]
+    public class MyMonitorSemaphoreTest : MyBaseSemaphoreTest
+    {
+        [TestInitialize]
+        public void Setup()
+        {
+            this.TwoPlaceSemaphore = new MyMonitorSemaphore(2);
+            this.ThreePlaceSemaphore = new MyMonitorSemaphore(3);
+    }
+
+        [TestMethod]
+        [ExpectedException(typeof(System.ArgumentOutOfRangeException))]
+        public override void NegativeNumberOfthread()
+        {
+            ISemaphore myMonitorSemaphore = new MyMonitorSemaphore(-1);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(System.ArgumentOutOfRangeException))]
+        public override void NullNumberOfthread()
+        {
+            ISemaphore myMonitoSemaphore = new MyMonitorSemaphore(0);
         }
     }
 
@@ -199,47 +270,22 @@ namespace Semaphore.Tests
         [TestInitialize]
         public void Setup()
         {
-            this.semaphore = new MySemaphore(2);
-            this.semaphore3 = new MySemaphore(3);
+            this.TwoPlaceSemaphore = new MySemaphore(2);
+            this.ThreePlaceSemaphore = new MySemaphore(3);
         }
 
         [TestMethod]
         [ExpectedException(typeof(System.ArgumentOutOfRangeException))]
         public override void NegativeNumberOfthread()
         {
-            ISemaphore sem = new MySemaphore(-1);
+            ISemaphore mySemaphore = new MySemaphore(-1);
         }
 
         [TestMethod]
         [ExpectedException(typeof(System.ArgumentOutOfRangeException))]
         public override void NullNumberOfthread()
         {
-            ISemaphore sem = new MySemaphore(0);
-        }
-    }
-
-    [TestClass]
-    public class MyMonitorSemaphoreTest : MyBaseSemaphoreTest
-    {
-        [TestInitialize]
-        public void Setup()
-        {
-            this.semaphore = new MyMonitorSemaphore(2);
-            this.semaphore3 = new MyMonitorSemaphore(3);
-    }
-
-        [TestMethod]
-        [ExpectedException(typeof(System.ArgumentOutOfRangeException))]
-        public override void NegativeNumberOfthread()
-        {
-            ISemaphore sem = new MyMonitorSemaphore(-1);
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(System.ArgumentOutOfRangeException))]
-        public override void NullNumberOfthread()
-        {
-            ISemaphore sem = new MyMonitorSemaphore(0);
+            ISemaphore mySemaphore = new MySemaphore(0);
         }
     }
 }
